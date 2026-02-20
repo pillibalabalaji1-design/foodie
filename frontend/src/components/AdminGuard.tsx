@@ -1,17 +1,30 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { getSessionUserFromToken } from '@/lib/auth';
 
-export default function AdminGuard({ children }: { children: React.ReactNode }) {
+type Props = {
+  children: React.ReactNode;
+  allowRoles?: Array<'ADMIN' | 'USER'>;
+};
+
+export default function AdminGuard({ children, allowRoles = ['ADMIN', 'USER'] }: Props) {
   const router = useRouter();
+  const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
     const token = window.localStorage.getItem('foodie_token');
-    if (!token) {
-      router.replace('/admin/login');
-    }
-  }, [router]);
+    const session = getSessionUserFromToken(token);
 
+    if (!session || !allowRoles.includes(session.role)) {
+      router.replace('/admin/login');
+      return;
+    }
+
+    setAllowed(true);
+  }, [allowRoles, router]);
+
+  if (!allowed) return null;
   return <>{children}</>;
 }

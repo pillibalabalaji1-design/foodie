@@ -1,6 +1,7 @@
 import app from './app';
 import { env } from './config/env';
+import { logger } from './config/logger';
 
 app.listen(env.port, () => {
-  console.log(`Backend listening on port ${env.port}`);
+  logger.info('server.started', { port: env.port, env: process.env.NODE_ENV || 'development' });
 });
