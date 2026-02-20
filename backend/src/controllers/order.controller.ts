@@ -7,7 +7,7 @@ const createOrderSchema = z.object({
   customerName: z.string().min(2),
   phone: z.string().min(7),
   address: z.string().min(5),
-  deliveryDate: z.string().datetime(),
+  deliveryDate: z.coerce.date(),
   items: z.any()
 });
 
@@ -26,7 +26,7 @@ export async function createOrder(req: Request, res: Response) {
       customerName: parse.data.customerName,
       phone: parse.data.phone,
       address: parse.data.address,
-      deliveryDate: new Date(parse.data.deliveryDate),
+      deliveryDate: parse.data.deliveryDate,
       items: parse.data.items
     }
   });

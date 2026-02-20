@@ -3,11 +3,23 @@
 import { FormEvent, useEffect, useState } from 'react';
 import AdminGuard from '@/components/AdminGuard';
 import { getSessionUserFromToken } from '@/lib/auth';
-import { api } from '@/lib/api';
+import { api, buildApiUrl } from '@/lib/api';
 import { logFrontend } from '@/lib/logger';
 
-type MenuItem = { id: number; name: string; description: string; price: number };
-type Order = { id: number; customerName: string; status: 'PENDING' | 'CONFIRMED' | 'DELIVERED' };
+type MenuItem = { id: number; name: string; description: string; price: number; imageUrl: string };
+type Order = {
+  id: number;
+  customerName: string;
+  phone: string;
+  address: string;
+  deliveryDate: string;
+  items: {
+    selectedItems?: string;
+    quantity?: string;
+    instructions?: string;
+  };
+  status: 'PENDING' | 'CONFIRMED' | 'DELIVERED';
+};
 type User = { id: number; name: string; email: string; role: 'ADMIN' | 'USER'; createdAt: string };
 
 export default function DashboardPage() {
@@ -19,9 +31,7 @@ export default function DashboardPage() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   async function loadData(admin: boolean) {
-    const requests: Promise<unknown>[] = [
-      api.get('/api/menu').then((r) => setMenu(r.data))
-    ];
+    const requests: Promise<unknown>[] = [api.get('/api/menu').then((r) => setMenu(r.data))];
 
     if (admin) {
       requests.push(api.get('/api/orders').then((r) => setOrders(r.data)));
@@ -115,11 +125,18 @@ export default function DashboardPage() {
             {menu.map((item) => (
               <li key={item.id} className="rounded border p-2">
                 <div className="flex items-center justify-between gap-3">
-                  <span>{item.name}</span>
+                  <div className="flex items-center gap-3">
+                    <img src={buildApiUrl(item.imageUrl)} alt={item.name} className="h-12 w-12 rounded object-cover" />
+                    <span>{item.name}</span>
+                  </div>
                   {isAdmin && (
                     <div className="flex gap-2">
-                      <button onClick={() => editMenu(item)} className="text-sm text-brandGreen">Edit</button>
-                      <button onClick={() => deleteMenu(item.id)} className="text-sm text-red-700">Delete</button>
+                      <button onClick={() => editMenu(item)} className="text-sm text-brandGreen">
+                        Edit
+                      </button>
+                      <button onClick={() => deleteMenu(item.id)} className="text-sm text-red-700">
+                        Delete
+                      </button>
                     </div>
                   )}
                 </div>
@@ -131,24 +148,37 @@ export default function DashboardPage() {
         <section className="rounded-xl bg-white p-5 shadow">
           <h2 className="mb-3 text-2xl font-semibold">Orders</h2>
           {isAdmin ? (
-            <ul className="space-y-3">
-              {orders.map((order) => (
-                <li key={order.id} className="rounded border p-3">
-                  <p className="font-semibold">#{order.id} {order.customerName}</p>
-                  <div className="mt-2 flex gap-2">
-                    {(['PENDING', 'CONFIRMED', 'DELIVERED'] as const).map((status) => (
-                      <button
-                        key={status}
-                        onClick={() => updateStatus(order.id, status)}
-                        className={`rounded px-2 py-1 text-xs ${order.status === status ? 'bg-brandGreen text-white' : 'bg-stone-100'}`}
-                      >
-                        {status}
-                      </button>
-                    ))}
-                  </div>
-                </li>
-              ))}
-            </ul>
+            orders.length > 0 ? (
+              <ul className="space-y-3">
+                {orders.map((order) => (
+                  <li key={order.id} className="rounded border p-3 text-sm">
+                    <p className="font-semibold">
+                      #{order.id} {order.customerName}
+                    </p>
+                    <p>Phone: {order.phone}</p>
+                    <p>Address: {order.address}</p>
+                    <p>Delivery: {new Date(order.deliveryDate).toLocaleString()}</p>
+                    <p>
+                      Booking: {order.items?.selectedItems || 'N/A'} | Qty: {order.items?.quantity || 'N/A'}
+                    </p>
+                    {order.items?.instructions && <p>Instructions: {order.items.instructions}</p>}
+                    <div className="mt-2 flex gap-2">
+                      {(['PENDING', 'CONFIRMED', 'DELIVERED'] as const).map((status) => (
+                        <button
+                          key={status}
+                          onClick={() => updateStatus(order.id, status)}
+                          className={`rounded px-2 py-1 text-xs ${order.status === status ? 'bg-brandGreen text-white' : 'bg-stone-100'}`}
+                        >
+                          {status}
+                        </button>
+                      ))}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-stone-700">No bookings yet. New pre-orders will appear here.</p>
+            )
           ) : (
             <p className="text-sm text-stone-700">Only admins can view and update all orders.</p>
           )}
@@ -161,7 +191,14 @@ export default function DashboardPage() {
               <form onSubmit={createUser} className="grid gap-2">
                 <input name="name" required className="rounded border p-2" placeholder="Name" />
                 <input name="email" required type="email" className="rounded border p-2" placeholder="Email" />
-                <input name="password" required minLength={8} type="password" className="rounded border p-2" placeholder="Temporary Password" />
+                <input
+                  name="password"
+                  required
+                  minLength={8}
+                  type="password"
+                  className="rounded border p-2"
+                  placeholder="Temporary Password"
+                />
                 <select name="role" className="rounded border p-2" defaultValue="USER">
                   <option value="ADMIN">admin</option>
                   <option value="USER">user</option>
@@ -172,8 +209,12 @@ export default function DashboardPage() {
               <ul className="mt-4 space-y-2 text-sm">
                 {users.map((user) => (
                   <li key={user.id} className="flex items-center justify-between rounded border p-2">
-                    <span>{user.name} ({user.email}) - {user.role}</span>
-                    <button className="text-red-700" onClick={() => removeUser(user.id)}>Delete</button>
+                    <span>
+                      {user.name} ({user.email}) - {user.role}
+                    </span>
+                    <button className="text-red-700" onClick={() => removeUser(user.id)}>
+                      Delete
+                    </button>
                   </li>
                 ))}
               </ul>

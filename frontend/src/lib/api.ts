@@ -14,6 +14,10 @@ function resolveApiBaseUrl() {
 
 export const API_BASE_URL = resolveApiBaseUrl();
 
+export function buildApiUrl(path: string) {
+  return new URL(path, `${API_BASE_URL}/`).toString();
+}
+
 export const api = axios.create({
   baseURL: API_BASE_URL
 });
