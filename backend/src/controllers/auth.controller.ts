@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../config/prisma';
+import { logger } from '../config/logger';
 import { signToken } from '../utils/jwt';
 
 const loginSchema = z.object({
@@ -19,43 +20,59 @@ export async function login(req: Request, res: Response) {
 
   const parse = loginSchema.safeParse(req.body);
   if (!parse.success) {
-    console.warn(`[auth.login][${requestTag}] invalid payload`, {
-      ip,
-      bodyKeys: Object.keys(req.body ?? {})
-    });
+    logger.warn('auth.login.invalid_payload', { requestTag, ip, bodyKeys: Object.keys(req.body ?? {}) });
     return res.status(400).json({ message: 'Invalid payload' });
   }
 
-  const { email, password } = parse.data;
+  const email = parse.data.email.toLowerCase().trim();
+  const { password } = parse.data;
 
   try {
-    console.info(`[auth.login][${requestTag}] login attempt`, { email, ip });
+    logger.info('auth.login.attempt', { requestTag, email, ip });
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      console.warn(`[auth.login][${requestTag}] user not found`, { email, ip });
-      return res.status(401).json({ message: 'Invalid credentials' });
+      logger.warn('auth.login.user_not_found', { requestTag, email, ip });
+      return res.status(401).json({ message: 'Invalid credentials. Please check your email and password.' });
     }
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
-      console.warn(`[auth.login][${requestTag}] password mismatch`, { email, ip, userId: user.id });
-      return res.status(401).json({ message: 'Invalid credentials' });
+      logger.warn('auth.login.password_mismatch', { requestTag, email, ip, userId: user.id });
+      return res.status(401).json({ message: 'Invalid credentials. Please check your email and password.' });
     }
 
     const token = signToken(user.id, user.role);
-    console.info(`[auth.login][${requestTag}] login success`, { email, ip, userId: user.id, role: user.role });
+    logger.info('auth.login.success', { requestTag, email, ip, userId: user.id, role: user.role });
 
     return res.json({
       token,
       user: { id: user.id, name: user.name, email: user.email, role: user.role }
     });
   } catch (error) {
-    console.error(`[auth.login][${requestTag}] unexpected error`, {
+    logger.error('auth.login.error', {
+      requestTag,
       email,
       ip,
       error: error instanceof Error ? error.message : 'unknown_error'
     });
     return res.status(500).json({ message: 'Login failed, please try again' });
   }
+}
+
+export async function me(req: Request, res: Response) {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.userId },
+    select: { id: true, name: true, email: true, role: true }
+  });
+
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  return res.json(user);
 }
