@@ -5,16 +5,21 @@ import { api } from '@/lib/api';
 
 export default function PreOrderPage() {
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setMessage('');
+    setError('');
+
     const formData = new FormData(event.currentTarget);
+    const deliveryDate = String(formData.get('deliveryDate') ?? '');
 
     const payload = {
       customerName: formData.get('customerName'),
       phone: formData.get('phone'),
       address: formData.get('address'),
-      deliveryDate: formData.get('deliveryDate'),
+      deliveryDate: new Date(deliveryDate).toISOString(),
       items: {
         selectedItems: formData.get('items'),
         quantity: formData.get('quantity'),
@@ -22,9 +27,13 @@ export default function PreOrderPage() {
       }
     };
 
-    await api.post('/api/orders', payload);
-    setMessage('Thank you! Your pre-order request has been received.');
-    event.currentTarget.reset();
+    try {
+      await api.post('/api/orders', payload);
+      setMessage('Thank you! Your pre-order request has been received.');
+      event.currentTarget.reset();
+    } catch {
+      setError('Unable to place your pre-order right now. Please check your details and try again.');
+    }
   }
 
   return (
@@ -42,6 +51,7 @@ export default function PreOrderPage() {
         <button className="rounded bg-brandRed p-2 font-semibold text-white">Submit Request</button>
       </form>
       <p className="mt-3 text-brandGreen">{message}</p>
+      <p className="mt-2 text-sm text-red-700">{error}</p>
     </main>
   );
 }
