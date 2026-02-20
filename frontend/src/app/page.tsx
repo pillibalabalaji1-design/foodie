@@ -10,7 +10,7 @@ export default function Home() {
           <p className="mt-4 text-stone-700">Foodie is a curated Andhra kitchen for families and events. We cook fresh on schedule and deliver at your selected date/time.</p>
           <div className="mt-6 flex gap-3">
             <Link href="/preorder" className="rounded-lg bg-brandRed px-4 py-2 font-semibold text-white">Pre-Order Now</Link>
-            <a className="rounded-lg border border-brandGreen px-4 py-2 font-semibold text-brandGreen" href="https://wa.me/919000000000">WhatsApp</a>
+            <a className="rounded-lg border border-brandGreen px-4 py-2 font-semibold text-brandGreen" href="https://wa.me/447440591222">WhatsApp</a>
           </div>
           <p className="mt-3 font-semibold text-brandRed">Orders must be placed at least 24–48 hours in advance.</p>
         </div>
