@@ -27,6 +27,7 @@ app.use(
 app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
 app.use('/api/health', healthRoutes);
+app.use('/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);

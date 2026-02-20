@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { API_BASE_URL, api } from '@/lib/api';
 
 type MenuItem = {
   id: number;
@@ -22,7 +22,7 @@ export default function MenuList() {
     <div className="grid gap-4 md:grid-cols-2">
       {menu.map((item) => (
         <article key={item.id} className="overflow-hidden rounded-xl bg-white shadow">
-          <img src={`${process.env.NEXT_PUBLIC_API_URL}${item.imageUrl}`} alt={item.name} className="h-52 w-full object-cover" />
+          <img src={`${API_BASE_URL}${item.imageUrl}`} alt={item.name} className="h-52 w-full object-cover" />
           <div className="p-4">
             <h3 className="text-xl font-semibold">{item.name}</h3>
             <p className="text-sm text-stone-600">{item.description}</p>
