@@ -11,15 +11,35 @@ export default function AdminLogin() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const email = String(form.get('email') ?? '');
+
+    console.info('[admin.login] submitting login request', { email, endpoint: '/api/auth/login' });
+
     try {
       const res = await api.post('/api/auth/login', {
-        email: form.get('email'),
+        email,
         password: form.get('password')
       });
+
+      console.info('[admin.login] login success', {
+        email,
+        status: res.status,
+        role: res.data?.user?.role
+      });
+
       window.localStorage.setItem('foodie_token', res.data.token);
       router.push('/admin/dashboard');
-    } catch {
-      setError('Invalid credentials');
+    } catch (err: unknown) {
+      const response = (err as { response?: { status?: number; data?: { message?: string } } }).response;
+      const backendMessage = response?.data?.message;
+
+      console.error('[admin.login] login failed', {
+        email,
+        status: response?.status,
+        backendMessage: backendMessage ?? null
+      });
+
+      setError(backendMessage ?? 'Invalid credentials');
     }
   }
 

@@ -49,7 +49,7 @@ docker run -d --name foodie-frontend --network foodie-net -p 3000:3000 \
 
 ## Admin Seed Credentials
 - Email: `admin@foodie.com`
-- Password: `Admin@123`
+- Password: `Areti123$`
 
 ## API Endpoints
 
