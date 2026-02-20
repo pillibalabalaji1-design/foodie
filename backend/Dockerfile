@@ -22,4 +22,4 @@ COPY prisma ./prisma
 COPY src ./src
 RUN mkdir -p /app/uploads
 EXPOSE 5000
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run prisma:seed && node dist/server.js"]
+CMD ["sh", "-c", "npm run prisma:migrate && npm run prisma:seed && npm run start"]
