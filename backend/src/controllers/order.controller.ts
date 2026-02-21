@@ -120,7 +120,7 @@ export async function createOrder(req: Request, res: Response) {
 
   let smsSent = false;
   if (order.phone) {
-    await sendOrderConfirmationSms(order.phone, `Foodie order ${orderCode} received. Total £${order.totalAmount.toFixed(2)}.`);
+    await sendOrderConfirmationSms(order.phone, `Foodie order ${orderCode} received. Total ₹${order.totalAmount.toFixed(2)}.`);
     smsSent = true;
   }
 
