@@ -2,14 +2,15 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import path from 'path';
 import { logger } from './config/logger';
+import { uploadsDir } from './config/uploads';
 import { errorHandler, notFound } from './middleware/error.middleware';
 import authRoutes from './routes/auth.routes';
 import healthRoutes from './routes/health.routes';
 import logRoutes from './routes/log.routes';
 import menuRoutes from './routes/menu.routes';
 import orderRoutes from './routes/order.routes';
+import paymentRoutes from './routes/payment.routes';
 import userRoutes from './routes/user.routes';
 
 const app = express();
@@ -24,13 +25,14 @@ app.use(
     }
   })
 );
-app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
+app.use('/uploads', express.static(uploadsDir));
 
 app.use('/api/health', healthRoutes);
 app.use('/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/payment', paymentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/logs', logRoutes);
 
