@@ -88,7 +88,31 @@ export default function PreOrderPage() {
     setCheckout((prev) => ({ ...prev, [name]: value }));
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const cartItems = useMemo(() => Object.values(cart), [cart]);
+  const totalAmount = useMemo(() => cartItems.reduce((sum, item) => sum + item.quantity * item.price, 0), [cartItems]);
+
+  function addToCart(item: MenuItem) {
+    setCart((prev) => ({ ...prev, [item.id]: { ...item, quantity: (prev[item.id]?.quantity || 0) + 1 } }));
+  }
+
+  function updateQuantity(itemId: number, quantity: number) {
+    setCart((prev) => {
+      if (quantity <= 0) {
+        const next = { ...prev };
+        delete next[itemId];
+        return next;
+      }
+      if (!prev[itemId]) return prev;
+      return { ...prev, [itemId]: { ...prev[itemId], quantity } };
+    });
+  }
+
+  function handleCheckoutInput(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    const { name, value } = event.currentTarget;
+    setCheckout((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function handleProceedToPayment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
