@@ -7,7 +7,15 @@ import { api } from '@/lib/api';
 import { logFrontend } from '@/lib/logger';
 
 type MenuItem = { id: number; name: string; description: string; price: number };
-type Order = { id: number; customerName: string; status: 'PENDING' | 'CONFIRMED' | 'PAID' };
+type OrderItem = { name?: string; quantity?: number; unitPrice?: number; subtotal?: number };
+type Order = {
+  id: number;
+  customerName: string;
+  status: 'PENDING' | 'CONFIRMED' | 'PAID';
+  items?: OrderItem[] | Record<string, unknown>;
+  totalAmount?: number;
+  paymentMethod?: 'CASH_ON_DELIVERY' | 'BANK_TRANSFER';
+};
 type User = { id: number; name: string; email: string; role: 'ADMIN' | 'USER'; createdAt: string };
 
 export default function DashboardPage() {
@@ -110,6 +118,23 @@ export default function DashboardPage() {
     await loadData(true);
   }
 
+  function getOrderItems(items: Order['items']): OrderItem[] {
+    if (Array.isArray(items)) return items;
+
+    if (items && typeof items === 'object') {
+      const selectedItems = (items as { selectedItems?: unknown }).selectedItems;
+      if (typeof selectedItems === 'string') {
+        return selectedItems
+          .split(',')
+          .map((name) => name.trim())
+          .filter(Boolean)
+          .map((name) => ({ name, quantity: 1 }));
+      }
+    }
+
+    return [];
+  }
+
   return (
     <AdminGuard allowRoles={['ADMIN', 'USER']}>
       <main className="mx-auto grid w-[92%] max-w-6xl gap-8 py-10 md:grid-cols-2">
@@ -157,6 +182,23 @@ export default function DashboardPage() {
               {orders.map((order) => (
                 <li key={order.id} className="rounded border p-3">
                   <p className="font-semibold">#{order.id} {order.customerName}</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-stone-700">
+                    {getOrderItems(order.items).length ? (
+                      getOrderItems(order.items).map((item, index) => (
+                        <li key={`${order.id}-${index}`}>
+                          {item.name || 'Item'} x{item.quantity || 1}
+                          {typeof item.unitPrice === 'number' ? ` • ₹${item.unitPrice.toFixed(2)}` : ''}
+                          {typeof item.subtotal === 'number' ? ` (Subtotal ₹${item.subtotal.toFixed(2)})` : ''}
+                        </li>
+                      ))
+                    ) : (
+                      <li>No item details available for this order.</li>
+                    )}
+                  </ul>
+                  <p className="mt-2 text-sm text-stone-700">
+                    Total: <span className="font-semibold">₹{(order.totalAmount || 0).toFixed(2)}</span>
+                    {order.paymentMethod ? ` • ${order.paymentMethod === 'BANK_TRANSFER' ? 'Bank Transfer' : 'Cash on Delivery'}` : ''}
+                  </p>
                   <div className="mt-2 flex gap-2">
                     {(['PENDING', 'CONFIRMED', 'PAID'] as const).map((status) => (
                       <button
