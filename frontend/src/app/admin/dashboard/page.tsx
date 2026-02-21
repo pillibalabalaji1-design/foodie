@@ -17,11 +17,12 @@ export default function DashboardPage() {
   const [backendLogs, setBackendLogs] = useState<string[]>([]);
   const [frontendLogs, setFrontendLogs] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isCreatingMenu, setIsCreatingMenu] = useState(false);
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
 
   async function loadData(admin: boolean) {
-    const requests: Promise<unknown>[] = [
-      api.get('/api/menu').then((r) => setMenu(r.data))
-    ];
+    const requests: Promise<unknown>[] = [api.get('/api/menu').then((r) => setMenu(r.data))];
 
     if (admin) {
       requests.push(api.get('/api/orders').then((r) => setOrders(r.data)));
@@ -50,10 +51,15 @@ export default function DashboardPage() {
 
   async function createMenu(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    await api.post('/api/menu', data, { headers: { 'Content-Type': 'multipart/form-data' } });
-    event.currentTarget.reset();
-    await loadData(isAdmin);
+    setIsCreatingMenu(true);
+    try {
+      const data = new FormData(event.currentTarget);
+      await api.post('/api/menu', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+      event.currentTarget.reset();
+      await loadData(isAdmin);
+    } finally {
+      setIsCreatingMenu(false);
+    }
   }
 
   async function editMenu(item: MenuItem) {
@@ -70,23 +76,33 @@ export default function DashboardPage() {
   }
 
   async function updateStatus(id: number, status: Order['status']) {
-    await api.put(`/api/orders/${id}`, { status });
-    await loadData(isAdmin);
+    setUpdatingOrderId(id);
+    try {
+      await api.put(`/api/orders/${id}`, { status });
+      await loadData(isAdmin);
+    } finally {
+      setUpdatingOrderId(null);
+    }
   }
 
   async function createUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    setIsCreatingUser(true);
+    try {
+      const formData = new FormData(event.currentTarget);
 
-    await api.post('/api/users', {
-      name: formData.get('name'),
-      email: String(formData.get('email') ?? '').toLowerCase().trim(),
-      password: formData.get('password'),
-      role: formData.get('role')
-    });
+      await api.post('/api/users', {
+        name: formData.get('name'),
+        email: String(formData.get('email') ?? '').toLowerCase().trim(),
+        password: formData.get('password'),
+        role: formData.get('role')
+      });
 
-    event.currentTarget.reset();
-    await loadData(true);
+      event.currentTarget.reset();
+      await loadData(true);
+    } finally {
+      setIsCreatingUser(false);
+    }
   }
 
   async function removeUser(id: number) {
@@ -101,11 +117,13 @@ export default function DashboardPage() {
           <h2 className="mb-3 text-2xl font-semibold">Menu Management</h2>
           {isAdmin ? (
             <form onSubmit={createMenu} className="grid gap-2">
-              <input name="name" required className="rounded border p-2" placeholder="Name" />
-              <textarea name="description" required className="rounded border p-2" placeholder="Description" />
-              <input name="price" required type="number" step="0.01" className="rounded border p-2" placeholder="Price" />
-              <input name="image" required type="file" accept="image/*" className="rounded border p-2" />
-              <button className="rounded bg-brandRed p-2 font-semibold text-white">Create</button>
+              <input disabled={isCreatingMenu} name="name" required className="rounded border p-2" placeholder="Name" />
+              <textarea disabled={isCreatingMenu} name="description" required className="rounded border p-2" placeholder="Description" />
+              <input disabled={isCreatingMenu} name="price" required type="number" step="0.01" className="rounded border p-2" placeholder="Price" />
+              <input disabled={isCreatingMenu} name="image" required type="file" accept="image/*" className="rounded border p-2" />
+              <button disabled={isCreatingMenu} className="rounded bg-brandRed p-2 font-semibold text-white disabled:opacity-70">
+                {isCreatingMenu ? 'Creating...' : 'Create'}
+              </button>
             </form>
           ) : (
             <p className="text-sm text-stone-700">Only admins can create or modify menu items.</p>
@@ -118,8 +136,12 @@ export default function DashboardPage() {
                   <span>{item.name}</span>
                   {isAdmin && (
                     <div className="flex gap-2">
-                      <button onClick={() => editMenu(item)} className="text-sm text-brandGreen">Edit</button>
-                      <button onClick={() => deleteMenu(item.id)} className="text-sm text-red-700">Delete</button>
+                      <button onClick={() => editMenu(item)} className="text-sm text-brandGreen">
+                        Edit
+                      </button>
+                      <button onClick={() => deleteMenu(item.id)} className="text-sm text-red-700">
+                        Delete
+                      </button>
                     </div>
                   )}
                 </div>
@@ -139,10 +161,11 @@ export default function DashboardPage() {
                     {(['PENDING', 'CONFIRMED', 'PAID'] as const).map((status) => (
                       <button
                         key={status}
+                        disabled={updatingOrderId === order.id}
                         onClick={() => updateStatus(order.id, status)}
-                        className={`rounded px-2 py-1 text-xs ${order.status === status ? 'bg-brandGreen text-white' : 'bg-stone-100'}`}
+                        className={`rounded px-2 py-1 text-xs ${order.status === status ? 'bg-brandGreen text-white' : 'bg-stone-100'} disabled:opacity-60`}
                       >
-                        {status}
+                        {updatingOrderId === order.id ? 'Updating...' : status}
                       </button>
                     ))}
                   </div>
@@ -159,14 +182,16 @@ export default function DashboardPage() {
             <section className="rounded-xl bg-white p-5 shadow">
               <h2 className="mb-3 text-2xl font-semibold">User Management</h2>
               <form onSubmit={createUser} className="grid gap-2">
-                <input name="name" required className="rounded border p-2" placeholder="Name" />
-                <input name="email" required type="email" className="rounded border p-2" placeholder="Email" />
-                <input name="password" required minLength={8} type="password" className="rounded border p-2" placeholder="Temporary Password" />
-                <select name="role" className="rounded border p-2" defaultValue="USER">
+                <input disabled={isCreatingUser} name="name" required className="rounded border p-2" placeholder="Name" />
+                <input disabled={isCreatingUser} name="email" required type="email" className="rounded border p-2" placeholder="Email" />
+                <input disabled={isCreatingUser} name="password" required minLength={8} type="password" className="rounded border p-2" placeholder="Temporary Password" />
+                <select disabled={isCreatingUser} name="role" className="rounded border p-2" defaultValue="USER">
                   <option value="ADMIN">admin</option>
                   <option value="USER">user</option>
                 </select>
-                <button className="rounded bg-brandRed p-2 font-semibold text-white">Create User</button>
+                <button disabled={isCreatingUser} className="rounded bg-brandRed p-2 font-semibold text-white disabled:opacity-70">
+                  {isCreatingUser ? 'Creating User...' : 'Create User'}
+                </button>
               </form>
 
               <ul className="mt-4 space-y-2 text-sm">
