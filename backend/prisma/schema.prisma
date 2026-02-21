@@ -15,7 +15,12 @@ enum Role {
 enum OrderStatus {
   PENDING
   CONFIRMED
-  DELIVERED
+  PAID
+}
+
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+  BANK_TRANSFER
 }
 
 model User {
@@ -39,11 +44,21 @@ model MenuItem {
 
 model Order {
   id           Int         @id @default(autoincrement())
+  orderCode    String      @unique
   customerName String
+  email        String
   phone        String
   address      String
   deliveryDate DateTime
   items        Json
+  totalAmount  Float
+  paymentMethod PaymentMethod
+  paymentReference String?
+  paymentReceiptUrl String?
+  paymentDetails Json?
+  specialInstructions String?
+  emailSent    Boolean     @default(false)
+  smsSent      Boolean     @default(false)
   status       OrderStatus @default(PENDING)
   createdAt    DateTime    @default(now())
 }

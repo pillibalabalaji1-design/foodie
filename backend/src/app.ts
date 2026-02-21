@@ -2,8 +2,8 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import path from 'path';
 import { logger } from './config/logger';
+import { uploadsDir } from './config/uploads';
 import { errorHandler, notFound } from './middleware/error.middleware';
 import authRoutes from './routes/auth.routes';
 import healthRoutes from './routes/health.routes';
@@ -24,7 +24,7 @@ app.use(
     }
   })
 );
-app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
+app.use('/uploads', express.static(uploadsDir));
 
 app.use('/api/health', healthRoutes);
 app.use('/health', healthRoutes);
