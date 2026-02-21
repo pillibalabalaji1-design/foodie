@@ -26,7 +26,7 @@ export function buildOrderConfirmationEmail(data: OrderEmailData) {
   const itemRows = data.items
     .map(
       (item) =>
-        `<tr><td>${item.name}</td><td>${item.quantity}</td><td>£${item.unitPrice.toFixed(2)}</td><td>£${item.subtotal.toFixed(2)}</td></tr>`
+        `<tr><td>${item.name}</td><td>${item.quantity}</td><td>₹${item.unitPrice.toFixed(2)}</td><td>₹${item.subtotal.toFixed(2)}</td></tr>`
     )
     .join('');
 
@@ -44,7 +44,7 @@ export function buildOrderConfirmationEmail(data: OrderEmailData) {
         ${itemRows}
       </tbody>
     </table>
-    <p><strong>Total:</strong> £${data.totalAmount.toFixed(2)}</p>
+    <p><strong>Total:</strong> ₹${data.totalAmount.toFixed(2)}</p>
   `;
 
   const textLines = [
@@ -56,10 +56,10 @@ export function buildOrderConfirmationEmail(data: OrderEmailData) {
   ];
 
   for (const item of data.items) {
-    textLines.push(`- ${item.name} x${item.quantity} @ £${item.unitPrice.toFixed(2)} = £${item.subtotal.toFixed(2)}`);
+    textLines.push(`- ${item.name} x${item.quantity} @ ₹${item.unitPrice.toFixed(2)} = ₹${item.subtotal.toFixed(2)}`);
   }
 
-  textLines.push(`Total: £${data.totalAmount.toFixed(2)}`);
+  textLines.push(`Total: ₹${data.totalAmount.toFixed(2)}`);
 
   return {
     subject: `Foodie Pre-Order Confirmation (${data.orderCode})`,

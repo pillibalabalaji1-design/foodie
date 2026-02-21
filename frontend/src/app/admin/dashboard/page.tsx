@@ -63,7 +63,6 @@ export default function DashboardPage() {
     try {
       const data = new FormData(event.currentTarget);
       await api.post('/api/menu', data, { headers: { 'Content-Type': 'multipart/form-data' } });
-      window.localStorage.setItem('foodie_menu_updated_at', String(Date.now()));
       event.currentTarget.reset();
       await loadData(isAdmin);
     } finally {
@@ -188,8 +187,8 @@ export default function DashboardPage() {
                       getOrderItems(order.items).map((item, index) => (
                         <li key={`${order.id}-${index}`}>
                           {item.name || 'Item'} x{item.quantity || 1}
-                          {typeof item.unitPrice === 'number' ? ` • £${item.unitPrice.toFixed(2)}` : ''}
-                          {typeof item.subtotal === 'number' ? ` (Subtotal £${item.subtotal.toFixed(2)})` : ''}
+                          {typeof item.unitPrice === 'number' ? ` • ₹${item.unitPrice.toFixed(2)}` : ''}
+                          {typeof item.subtotal === 'number' ? ` (Subtotal ₹${item.subtotal.toFixed(2)})` : ''}
                         </li>
                       ))
                     ) : (
@@ -197,7 +196,7 @@ export default function DashboardPage() {
                     )}
                   </ul>
                   <p className="mt-2 text-sm text-stone-700">
-                    Total: <span className="font-semibold">£{(order.totalAmount || 0).toFixed(2)}</span>
+                    Total: <span className="font-semibold">₹{(order.totalAmount || 0).toFixed(2)}</span>
                     {order.paymentMethod ? ` • ${order.paymentMethod === 'BANK_TRANSFER' ? 'Bank Transfer' : 'Cash on Delivery'}` : ''}
                   </p>
                   <div className="mt-2 flex gap-2">
