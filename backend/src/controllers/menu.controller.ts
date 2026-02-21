@@ -10,6 +10,7 @@ const menuSchema = z.object({
 
 export async function getMenu(_req: Request, res: Response) {
   const items = await prisma.menuItem.findMany({ orderBy: { createdAt: 'desc' } });
+  res.set('Cache-Control', 'no-store');
   return res.json(items);
 }
 

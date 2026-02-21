@@ -64,6 +64,7 @@ export default function DashboardPage() {
       const data = new FormData(event.currentTarget);
       await api.post('/api/menu', data, { headers: { 'Content-Type': 'multipart/form-data' } });
       event.currentTarget.reset();
+      window.localStorage.setItem('foodie_menu_updated_at', String(Date.now()));
       await loadData(isAdmin);
     } finally {
       setIsCreatingMenu(false);
@@ -75,11 +76,13 @@ export default function DashboardPage() {
     const description = window.prompt('Description', item.description) || item.description;
     const price = Number(window.prompt('Price', String(item.price)) || item.price);
     await api.put(`/api/menu/${item.id}`, { name, description, price });
+    window.localStorage.setItem('foodie_menu_updated_at', String(Date.now()));
     await loadData(isAdmin);
   }
 
   async function deleteMenu(id: number) {
     await api.delete(`/api/menu/${id}`);
+    window.localStorage.setItem('foodie_menu_updated_at', String(Date.now()));
     await loadData(isAdmin);
   }
 
