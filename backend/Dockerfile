@@ -2,7 +2,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache openssl
 COPY package*.json ./
-RUN npm install
+RUN npm install --no-audit --no-fund
 COPY tsconfig.json ./
 COPY prisma ./prisma
 RUN npx prisma generate
@@ -14,12 +14,11 @@ WORKDIR /app
 RUN apk add --no-cache openssl
 ENV NODE_ENV=production
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm install --omit=dev --no-audit --no-fund
 COPY --from=builder /app/node_modules/.prisma /app/node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma /app/node_modules/@prisma
 COPY --from=builder /app/dist ./dist
 COPY prisma ./prisma
-COPY src ./src
 RUN mkdir -p /app/uploads
 EXPOSE 5000
 CMD ["sh", "-c", "npm run prisma:migrate && npm run prisma:seed && npm run start"]
