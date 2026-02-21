@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { logFrontend } from '@/lib/logger';
 
 type MenuItem = { id: number; name: string; description: string; price: number };
-type Order = { id: number; customerName: string; status: 'PENDING' | 'CONFIRMED' | 'DELIVERED' };
+type Order = { id: number; customerName: string; status: 'PENDING' | 'CONFIRMED' | 'PAID' };
 type User = { id: number; name: string; email: string; role: 'ADMIN' | 'USER'; createdAt: string };
 
 export default function DashboardPage() {
@@ -136,7 +136,7 @@ export default function DashboardPage() {
                 <li key={order.id} className="rounded border p-3">
                   <p className="font-semibold">#{order.id} {order.customerName}</p>
                   <div className="mt-2 flex gap-2">
-                    {(['PENDING', 'CONFIRMED', 'DELIVERED'] as const).map((status) => (
+                    {(['PENDING', 'CONFIRMED', 'PAID'] as const).map((status) => (
                       <button
                         key={status}
                         onClick={() => updateStatus(order.id, status)}
