@@ -21,7 +21,7 @@ export default function MenuList() {
 
     const loadMenu = () => {
       api
-        .get('/api/menu', { headers: { 'Cache-Control': 'no-cache' } })
+        .get('/api/menu', { params: { t: Date.now() }, headers: { 'Cache-Control': 'no-cache' } })
         .then((res) => {
           if (mounted) setMenu(res.data);
         })

@@ -64,7 +64,7 @@ export default function DashboardPage() {
   const [orderFilters, setOrderFilters] = useState<OrderFilters>(initialOrderFilters);
 
   async function loadData(admin: boolean) {
-    const requests: Promise<unknown>[] = [api.get('/api/menu').then((r) => setMenu(r.data))];
+    const requests: Promise<unknown>[] = [api.get('/api/menu', { params: { t: Date.now() } }).then((r) => setMenu(r.data))];
 
     if (admin) {
       requests.push(api.get('/api/orders').then((r) => setOrders(r.data)));

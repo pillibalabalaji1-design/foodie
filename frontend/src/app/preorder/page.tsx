@@ -28,6 +28,8 @@ type PaymentOption = {
   };
 };
 
+const gbp = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' });
+
 const initialCheckout = {
   customerName: '',
   email: '',
@@ -51,7 +53,7 @@ export default function PreOrderPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    api.get('/api/menu').then((res) => setMenu(res.data)).catch(() => setMenu([]));
+    api.get('/api/menu', { params: { t: Date.now() } }).then((res) => setMenu(res.data)).catch(() => setMenu([]));
     api.get('/api/orders/payment/options').then((res) => setPaymentOptions(res.data.methods || [])).catch(() => setPaymentOptions([]));
   }, []);
 
@@ -165,7 +167,7 @@ export default function PreOrderPage() {
               {item.imageUrl ? <img src={`${API_BASE_URL}${item.imageUrl}`} alt={item.name} className="mb-3 h-40 w-full rounded object-cover" /> : null}
               <h3 className="text-lg font-semibold">{item.name}</h3>
               <p className="text-sm text-stone-600">{item.description}</p>
-              <p className="mt-1 font-semibold text-brandRed">₹{item.price.toFixed(2)}</p>
+              <p className="mt-1 font-semibold text-brandRed">{gbp.format(item.price)}</p>
               <div className="mt-3 flex items-center gap-2">
                 <button type="button" onClick={() => addToCart(item)} className="rounded bg-brandRed px-3 py-1 text-sm font-semibold text-white">Add</button>
                 <button type="button" onClick={() => updateQuantity(item.id, (cart[item.id]?.quantity || 0) - 1)} className="rounded bg-stone-200 px-2 py-1">-</button>
@@ -202,14 +204,14 @@ export default function PreOrderPage() {
                         <button type="button" onClick={() => updateQuantity(item.id, item.quantity + 1)} className="rounded bg-stone-200 px-2">+</button>
                       </div>
                     </td>
-                    <td className="py-2">₹{item.price.toFixed(2)}</td>
-                    <td className="py-2">₹{(item.price * item.quantity).toFixed(2)}</td>
+                    <td className="py-2">{gbp.format(item.price)}</td>
+                    <td className="py-2">{gbp.format(item.price * item.quantity)}</td>
                     <td className="py-2"><button type="button" onClick={() => updateQuantity(item.id, 0)} className="text-red-700">Remove</button></td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p className="mt-4 text-right text-lg font-semibold">Total: ₹{totalAmount.toFixed(2)}</p>
+            <p className="mt-4 text-right text-lg font-semibold">Total: {gbp.format(totalAmount)}</p>
           </div>
         ) : (
           <p className="mt-3 text-stone-700">Your cart is empty.</p>
