@@ -18,7 +18,7 @@ const createOrderSchema = z.object({
   email: z.string().email(),
   phone: z.string().min(7),
   address: z.string().min(5),
-  deliveryDate: z.string().datetime(),
+  deliveryDate: z.coerce.date(),
   items: z.array(orderItemSchema).min(1),
   specialInstructions: z.string().max(500).optional(),
   paymentMethod: z.nativeEnum(PaymentMethod),
@@ -58,6 +58,11 @@ export async function createOrder(req: Request, res: Response) {
 
   const data = parse.data;
 
+  const minAdvanceMs = 24 * 60 * 60 * 1000;
+  if (data.deliveryDate.getTime() < Date.now() + minAdvanceMs) {
+    return res.status(400).json({ message: 'Delivery slot must be at least 24 hours from now.' });
+  }
+
   if (data.paymentMethod === 'BANK_TRANSFER' && !data.paymentReference) {
     return res.status(400).json({ message: 'Payment reference is required for bank transfer.' });
   }
@@ -79,7 +84,7 @@ export async function createOrder(req: Request, res: Response) {
       email: data.email.toLowerCase(),
       phone: data.phone,
       address: data.address,
-      deliveryDate: new Date(data.deliveryDate),
+      deliveryDate: data.deliveryDate,
       items: computedItems,
       specialInstructions: data.specialInstructions,
       totalAmount,

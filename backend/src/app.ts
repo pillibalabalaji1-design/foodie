@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import { env } from './config/env';
 import { logger } from './config/logger';
 import { uploadsDir } from './config/uploads';
 import { errorHandler, notFound } from './middleware/error.middleware';
@@ -16,7 +17,19 @@ import userRoutes from './routes/user.routes';
 const app = express();
 
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      const allowedOrigins = new Set([env.frontendUrl, 'http://localhost:3000', 'http://127.0.0.1:3000']);
+      if (allowedOrigins.has(origin)) return callback(null, true);
+
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true
+  })
+);
 app.use(express.json({ limit: '2mb' }));
 app.use(
   morgan('combined', {

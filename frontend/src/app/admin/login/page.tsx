@@ -26,7 +26,6 @@ export default function AdminLogin() {
       });
 
       await logFrontend('info', 'admin.login.success', { email, status: res.status });
-      window.localStorage.setItem('foodie_token', res.data.token);
       router.push('/admin/dashboard');
     } catch (err: unknown) {
       const response = (err as { response?: { status?: number; data?: { message?: string } } }).response;

@@ -52,6 +52,12 @@ export default function PreOrderPage() {
   const [orderCode, setOrderCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const minDeliveryDateTime = useMemo(() => {
+    const date = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const tzOffsetMs = date.getTimezoneOffset() * 60 * 1000;
+    return new Date(date.getTime() - tzOffsetMs).toISOString().slice(0, 16);
+  }, []);
+
   useEffect(() => {
     api.get('/api/menu', { params: { t: Date.now() } }).then((res) => setMenu(res.data)).catch(() => setMenu([]));
     api.get('/api/orders/payment/options').then((res) => setPaymentOptions(res.data.methods || [])).catch(() => setPaymentOptions([]));
@@ -104,7 +110,7 @@ export default function PreOrderPage() {
       payload.append('email', checkout.email);
       payload.append('phone', checkout.phone);
       payload.append('address', checkout.address);
-      payload.append('deliveryDate', new Date(checkout.deliveryDate).toISOString());
+      payload.append('deliveryDate', checkout.deliveryDate);
       payload.append('specialInstructions', checkout.specialInstructions);
       payload.append('paymentMethod', checkout.paymentMethod);
       payload.append('paymentReference', checkout.paymentReference);
@@ -133,8 +139,9 @@ export default function PreOrderPage() {
       setCart({});
       setCheckout(initialCheckout);
       setPaymentReceipt(null);
-    } catch (error) {
-      setErrorMessage('Unable to place your pre-order. Please verify all fields and try again.');
+    } catch (error: unknown) {
+      const response = (error as { response?: { data?: { message?: string } } }).response;
+      setErrorMessage(response?.data?.message || 'Unable to place your pre-order. Please verify all fields and try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -225,7 +232,16 @@ export default function PreOrderPage() {
           <input required type="email" name="email" value={checkout.email} onChange={handleCheckoutInput} className="rounded border p-2" placeholder="Email Address" />
           <input required name="phone" value={checkout.phone} onChange={handleCheckoutInput} className="rounded border p-2" placeholder="Phone Number" />
           <textarea required name="address" value={checkout.address} onChange={handleCheckoutInput} className="rounded border p-2" placeholder="Delivery Address" />
-          <input required name="deliveryDate" type="datetime-local" value={checkout.deliveryDate} onChange={handleCheckoutInput} className="rounded border p-2" />
+          <input
+            required
+            name="deliveryDate"
+            type="datetime-local"
+            min={minDeliveryDateTime}
+            value={checkout.deliveryDate}
+            onChange={handleCheckoutInput}
+            className="rounded border p-2"
+          />
+          <p className="text-xs text-stone-600">Select a delivery slot at least 24 hours from now.</p>
           <textarea name="specialInstructions" value={checkout.specialInstructions} onChange={handleCheckoutInput} className="rounded border p-2" placeholder="Special instructions" />
 
           <select required name="paymentMethod" value={checkout.paymentMethod} onChange={handleCheckoutInput} className="rounded border p-2">
