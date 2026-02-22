@@ -38,8 +38,6 @@ type OrderFilters = {
   toDate: string;
 };
 
-const gbp = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' });
-
 const initialOrderFilters: OrderFilters = {
   search: '',
   status: 'ALL',
@@ -414,8 +412,8 @@ export default function DashboardPage() {
                         getOrderItems(order.items).map((item, index) => (
                           <li key={`${order.id}-${index}`}>
                             {item.name || 'Item'} x{item.quantity || 1}
-                            {typeof item.unitPrice === 'number' ? ` • ${gbp.format(item.unitPrice)}` : ''}
-                            {typeof item.subtotal === 'number' ? ` (Subtotal ${gbp.format(item.subtotal)})` : ''}
+                            {typeof item.unitPrice === 'number' ? ` • ₹${item.unitPrice.toFixed(2)}` : ''}
+                            {typeof item.subtotal === 'number' ? ` (Subtotal ₹${item.subtotal.toFixed(2)})` : ''}
                           </li>
                         ))
                       ) : (
@@ -423,7 +421,7 @@ export default function DashboardPage() {
                       )}
                     </ul>
                     <p className="mt-2 text-sm text-stone-700">
-                      Total: <span className="font-semibold">{gbp.format(order.totalAmount || 0)}</span>
+                      Total: <span className="font-semibold">₹{(order.totalAmount || 0).toFixed(2)}</span>
                       {order.paymentMethod ? ` • ${order.paymentMethod === 'BANK_TRANSFER' ? 'Bank Transfer' : 'Cash on Delivery'}` : ''}
                     </p>
                     <div className="mt-2 flex gap-2">
