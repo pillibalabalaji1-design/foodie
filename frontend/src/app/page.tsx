@@ -8,49 +8,37 @@ const highlights = [
 
 export default function Home() {
   return (
-    <main className="bg-brandBeige">
-      <section className="mx-auto grid w-[92%] max-w-6xl gap-10 py-12 md:grid-cols-2 md:py-16">
-        <div className="animate-[fadeIn_700ms_ease-out] self-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-brandGold">Pre-Order Premium Kitchen</p>
-          <h1 className="mt-3 text-4xl font-bold leading-tight text-brandBrown md:text-6xl">Andhra Soul Food, Elevated for Planned Celebrations</h1>
-          <p className="mt-5 max-w-xl text-base text-stone-700 md:text-lg">
-            Foodie is a pre-order-only cloud kitchen crafted for families, house parties, and festive gatherings. Reserve your meal now,
-            and we’ll deliver it hot and fresh in your selected slot.
+    <main className="mx-auto w-[92%] max-w-6xl py-12">
+      <section className="grid items-center gap-10 md:grid-cols-2">
+        <div className="animate-[fadeIn_700ms_ease-out]">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brandGold">Pre-Order Only Cloud Kitchen</p>
+          <h1 className="mt-3 text-4xl font-semibold leading-tight md:text-5xl">Authentic Andhra Feasts, Crafted Fresh for Your Chosen Delivery Slot</h1>
+          <p className="mt-4 text-stone-700">
+            Foodie brings premium Andhra pre-order dining with handcrafted meals for family gatherings, celebrations, and planned events.
+            Reserve now and get freshly cooked food delivered on schedule.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link
               href="/preorder"
-              className="rounded-full bg-brandRed px-7 py-3 font-semibold text-white shadow-xl transition hover:-translate-y-0.5 hover:bg-[#720000]"
+              className="rounded-full bg-brandRed px-6 py-3 font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#720000]"
             >
-              Book Your Pre-Order
+              Pre-Order Now
             </Link>
-            <Link
-              href="/menu"
-              className="rounded-full border border-brandGold bg-white/60 px-7 py-3 font-semibold text-brandBrown shadow-sm transition hover:bg-brandGold/10"
+            <a
+              className="rounded-full border border-brandGold px-6 py-3 font-semibold text-brandBrown shadow-sm transition hover:bg-brandGold/10"
+              href="https://wa.me/447440591222"
             >
-              Explore Menu
-            </Link>
+              WhatsApp Quick Order
+            </a>
           </div>
-          <p className="mt-4 font-semibold text-brandRed">Same-day ordering is disabled. Minimum 24-hour advance booking applies.</p>
+          <p className="mt-4 font-semibold text-brandRed">Orders are accepted for delivery slots at least 24 hours in advance.</p>
         </div>
-
         <div className="animate-[fadeIn_900ms_ease-out]">
           <img
-            className="rounded-3xl shadow-2xl ring-1 ring-black/5"
-            src="https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=1500&q=80"
+            className="rounded-2xl shadow-2xl"
+            src="https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=1400&q=80"
             alt="Authentic Andhra thali with warm lighting and steam rising"
           />
-        </div>
-      </section>
-
-      <section className="mx-auto w-[92%] max-w-6xl pb-14">
-        <div className="grid gap-4 md:grid-cols-3">
-          {highlights.map((item) => (
-            <article key={item.title} className="rounded-2xl bg-white p-5 shadow-lg shadow-brandRed/5 transition hover:-translate-y-1 hover:shadow-xl">
-              <h3 className="text-lg font-semibold text-brandBrown">{item.title}</h3>
-              <p className="mt-2 text-sm text-stone-700">{item.detail}</p>
-            </article>
-          ))}
         </div>
       </section>
     </main>
