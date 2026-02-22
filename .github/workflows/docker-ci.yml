@@ -39,7 +39,7 @@ jobs:
           push: true
           tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
 
-      - name: Clone Helm repo and update backend tag
+      - name: Clone Helm repo and update image tags
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
@@ -52,13 +52,28 @@ jobs:
           cd helm-repo
           git checkout "${HELM_BRANCH}"
 
-          sed -i -E '/^backend:/,/^[^[:space:]]/ { /^  image:/,/^  [^[:space:]]/ { s#(^[[:space:]]*tag:[[:space:]]*).*$#\1"'"${IMAGE_TAG}"'"#; } }' "${VALUES_FILE}"
+          VALUES_PATH=""
+          for candidate in "${VALUES_FILE}" "foodie/${VALUES_FILE}"; do
+            if [ -f "${candidate}"; then
+              VALUES_PATH="${candidate}"
+              break
+            fi
+          done
 
-          if git diff --quiet -- "${VALUES_FILE}"; then
-            echo "No changes detected in ${VALUES_FILE}; skipping commit and push."
+          if [ -z "${VALUES_PATH}" ]; then
+            echo "Unable to find ${VALUES_FILE} in Helm repo root or foodie/ directory."
+            exit 1
+          fi
+
+          for service in frontend backend database; do
+            sed -i -E "/^${service}:/,/^[^[:space:]]/ { /^  image:/,/^  [^[:space:]]/ { s#(^[[:space:]]*tag:[[:space:]]*).*$#\\1\"${IMAGE_TAG}\"#; } }" "${VALUES_PATH}"
+          done
+
+          if git diff --quiet -- "${VALUES_PATH}"; then
+            echo "No changes detected in ${VALUES_PATH}; skipping commit and push."
             exit 0
           fi
 
-          git add "${VALUES_FILE}"
-          git commit -m "chore(backend): update image tag to ${IMAGE_TAG}"
+          git add "${VALUES_PATH}"
+          git commit -m "chore(helm): update frontend/backend/database image tags to ${IMAGE_TAG}"
           git push origin "${HELM_BRANCH}"
