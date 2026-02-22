@@ -15,11 +15,13 @@ const gbp = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' 
 
 export default function MenuList() {
   const [menu, setMenu] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
     const loadMenu = () => {
+      if (mounted) setLoading(true);
       api
         .get('/api/menu', { params: { t: Date.now() }, headers: { 'Cache-Control': 'no-cache' } })
         .then((res) => {
@@ -27,6 +29,9 @@ export default function MenuList() {
         })
         .catch(() => {
           if (mounted) setMenu([]);
+        })
+        .finally(() => {
+          if (mounted) setLoading(false);
         });
     };
 
@@ -37,17 +42,23 @@ export default function MenuList() {
     const onStorage = (event: StorageEvent) => {
       if (event.key === 'foodie_menu_updated_at') loadMenu();
     };
+    const onManualRefresh = () => loadMenu();
 
     window.addEventListener('focus', onFocus);
     window.addEventListener('storage', onStorage);
+    window.addEventListener('foodie-menu-updated', onManualRefresh);
 
     return () => {
       mounted = false;
       window.clearInterval(interval);
       window.removeEventListener('focus', onFocus);
       window.removeEventListener('storage', onStorage);
+      window.removeEventListener('foodie-menu-updated', onManualRefresh);
     };
   }, []);
+
+  if (loading) return <p className="text-stone-600">Loading menu...</p>;
+  if (menu.length === 0) return <p className="rounded-xl bg-white p-4 text-stone-600 shadow">No menu items yet. Please check back soon.</p>;
 
   return (
     <div className="grid gap-4 md:grid-cols-2">

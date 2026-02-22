@@ -4,13 +4,22 @@ import { verifyToken } from '../utils/jwt';
 
 export function authenticateToken(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+  const cookieToken = req.headers.cookie
+    ?.split(';')
+    .map((entry) => entry.trim())
+    .find((entry) => entry.startsWith('foodie_access_token='))
+    ?.split('=')
+    .slice(1)
+    .join('=');
+
+  const token = bearerToken ?? cookieToken;
+  if (!token) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  const token = authHeader.split(' ')[1];
   try {
-    req.user = verifyToken(token);
+    req.user = verifyToken(decodeURIComponent(token));
     return next();
   } catch {
     return res.status(401).json({ message: 'Invalid token' });

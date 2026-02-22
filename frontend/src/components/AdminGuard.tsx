@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getSessionUserFromToken } from '@/lib/auth';
+import { api } from '@/lib/api';
 
 type Props = {
   children: React.ReactNode;
@@ -14,15 +14,27 @@ export default function AdminGuard({ children, allowRoles = ['ADMIN', 'USER'] }:
   const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
-    const token = window.localStorage.getItem('foodie_token');
-    const session = getSessionUserFromToken(token);
+    let active = true;
 
-    if (!session || !allowRoles.includes(session.role)) {
-      router.replace('/admin/login');
-      return;
-    }
+    const validateSession = async () => {
+      const res = await api.get('/api/auth/me');
+      const session = res.data as { role?: 'ADMIN' | 'USER' };
 
-    setAllowed(true);
+      if (!active) return;
+
+      if (!session?.role || !allowRoles.includes(session.role)) {
+        router.replace('/admin/login');
+        return;
+      }
+
+      setAllowed(true);
+    };
+
+    validateSession().catch(() => router.replace('/admin/login'));
+
+    return () => {
+      active = false;
+    };
   }, [allowRoles, router]);
 
   if (!allowed) return null;
