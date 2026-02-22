@@ -4,7 +4,7 @@ import { prisma } from '../config/prisma';
 
 const menuSchema = z.object({
   name: z.string().min(2),
-  description: z.string().min(5),
+  description: z.string().min(3),
   price: z.coerce.number().positive()
 });
 
@@ -16,8 +16,12 @@ export async function getMenu(_req: Request, res: Response) {
 
 export async function createMenuItem(req: Request, res: Response) {
   const parse = menuSchema.safeParse(req.body);
-  if (!parse.success || !req.file) {
-    return res.status(400).json({ message: 'Invalid payload or image missing' });
+  if (!parse.success) {
+    return res.status(400).json({ message: 'Invalid payload', errors: parse.error.flatten().fieldErrors });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ message: 'Please upload a menu image.' });
   }
 
   const item = await prisma.menuItem.create({
@@ -34,7 +38,7 @@ export async function updateMenuItem(req: Request, res: Response) {
   const id = Number(req.params.id);
   const parse = menuSchema.safeParse(req.body);
   if (!id || !parse.success) {
-    return res.status(400).json({ message: 'Invalid payload' });
+    return res.status(400).json({ message: 'Invalid payload', errors: parse.success ? undefined : parse.error.flatten().fieldErrors });
   }
 
   const item = await prisma.menuItem.update({

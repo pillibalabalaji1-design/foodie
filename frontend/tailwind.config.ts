@@ -5,9 +5,10 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        brandRed: '#8e1f1b',
-        brandBeige: '#f7f1e8',
-        brandGreen: '#456c3f'
+        brandRed: '#8B0000',
+        brandBeige: '#FFF8E7',
+        brandGold: '#D4A017',
+        brandBrown: '#5E2A1A'
       }
     }
   },
