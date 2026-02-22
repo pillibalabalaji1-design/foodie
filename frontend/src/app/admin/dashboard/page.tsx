@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import AdminGuard from '@/components/AdminGuard';
-import { getSessionUserFromToken } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { logFrontend } from '@/lib/logger';
 
@@ -62,6 +61,7 @@ export default function DashboardPage() {
   const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
   const [orderFilters, setOrderFilters] = useState<OrderFilters>(initialOrderFilters);
+  const [menuMessage, setMenuMessage] = useState<string>('');
 
   async function loadData(admin: boolean) {
     const requests: Promise<unknown>[] = [api.get('/api/menu', { params: { t: Date.now() } }).then((r) => setMenu(r.data))];
@@ -79,26 +79,46 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
-    const token = window.localStorage.getItem('foodie_token');
-    const session = getSessionUserFromToken(token);
-    const admin = session?.role === 'ADMIN';
-    setIsAdmin(admin);
+    const init = async () => {
+      const me = await api.get('/api/auth/me');
+      const admin = me.data?.role === 'ADMIN';
+      setIsAdmin(admin);
+      await loadData(admin);
+    };
 
-    loadData(admin).catch(async (error) => {
+    init().catch(async (error) => {
       await logFrontend('error', 'admin.dashboard.load_failed', {
         message: error instanceof Error ? error.message : 'unknown_error'
       });
     });
   }, []);
 
+  function notifyMenuUpdated() {
+    window.localStorage.setItem('foodie_menu_updated_at', String(Date.now()));
+    window.dispatchEvent(new Event('foodie-menu-updated'));
+  }
+
   async function createMenu(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsCreatingMenu(true);
+    setMenuMessage('');
     try {
       const data = new FormData(event.currentTarget);
+      const tempItem: MenuItem = {
+        id: -Date.now(),
+        name: String(data.get('name') ?? ''),
+        description: String(data.get('description') ?? ''),
+        price: Number(data.get('price') ?? 0)
+      };
+      setMenu((prev) => [tempItem, ...prev]);
+
       await api.post('/api/menu', data, { headers: { 'Content-Type': 'multipart/form-data' } });
       event.currentTarget.reset();
-      window.localStorage.setItem('foodie_menu_updated_at', String(Date.now()));
+      setMenuMessage('Menu item created successfully.');
+      notifyMenuUpdated();
+      await loadData(isAdmin);
+    } catch {
+      setMenuMessage('Could not create menu item. Please try again.');
       await loadData(isAdmin);
     } finally {
       setIsCreatingMenu(false);
@@ -110,13 +130,13 @@ export default function DashboardPage() {
     const description = window.prompt('Description', item.description) || item.description;
     const price = Number(window.prompt('Price', String(item.price)) || item.price);
     await api.put(`/api/menu/${item.id}`, { name, description, price });
-    window.localStorage.setItem('foodie_menu_updated_at', String(Date.now()));
+    notifyMenuUpdated();
     await loadData(isAdmin);
   }
 
   async function deleteMenu(id: number) {
     await api.delete(`/api/menu/${id}`);
-    window.localStorage.setItem('foodie_menu_updated_at', String(Date.now()));
+    notifyMenuUpdated();
     await loadData(isAdmin);
   }
 
@@ -308,6 +328,7 @@ export default function DashboardPage() {
               <button disabled={isCreatingMenu} className="rounded bg-brandRed p-2 font-semibold text-white disabled:opacity-70">
                 {isCreatingMenu ? 'Creating...' : 'Create'}
               </button>
+              {menuMessage ? <p className="text-sm text-brandRed">{menuMessage}</p> : null}
             </form>
           ) : (
             <p className="text-sm text-stone-700">Only admins can create or modify menu items.</p>
@@ -320,7 +341,7 @@ export default function DashboardPage() {
                   <span>{item.name}</span>
                   {isAdmin && (
                     <div className="flex gap-2">
-                      <button onClick={() => editMenu(item)} className="text-sm text-brandGreen">
+                      <button onClick={() => editMenu(item)} className="text-sm text-brandBrown">
                         Edit
                       </button>
                       <button onClick={() => deleteMenu(item.id)} className="text-sm text-red-700">
@@ -430,7 +451,7 @@ export default function DashboardPage() {
                           key={status}
                           disabled={updatingOrderId === order.id}
                           onClick={() => updateStatus(order.id, status)}
-                          className={`rounded px-2 py-1 text-xs ${order.status === status ? 'bg-brandGreen text-white' : 'bg-stone-100'} disabled:opacity-60`}
+                          className={`rounded px-2 py-1 text-xs ${order.status === status ? 'bg-brandBrown text-white' : 'bg-stone-100'} disabled:opacity-60`}
                         >
                           {updatingOrderId === order.id ? 'Updating...' : status}
                         </button>
