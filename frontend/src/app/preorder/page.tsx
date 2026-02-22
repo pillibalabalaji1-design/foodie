@@ -59,39 +59,6 @@ export default function PreOrderPage() {
   const totalAmount = useMemo(() => cartItems.reduce((sum, item) => sum + item.quantity * item.price, 0), [cartItems]);
 
   function addToCart(item: MenuItem) {
-    setCart((prev) => {
-      const existing = prev[item.id];
-      return {
-        ...prev,
-        [item.id]: { ...item, quantity: existing ? existing.quantity + 1 : 1 }
-      };
-    });
-  }
-
-  function updateQuantity(itemId: number, quantity: number) {
-    setCart((prev) => {
-      if (quantity <= 0) {
-        const next = { ...prev };
-        delete next[itemId];
-        return next;
-      }
-      if (!prev[itemId]) return prev;
-      return {
-        ...prev,
-        [itemId]: { ...prev[itemId], quantity }
-      };
-    });
-  }
-
-  function handleCheckoutInput(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
-    const { name, value } = event.currentTarget;
-    setCheckout((prev) => ({ ...prev, [name]: value }));
-  }
-
-  const cartItems = useMemo(() => Object.values(cart), [cart]);
-  const totalAmount = useMemo(() => cartItems.reduce((sum, item) => sum + item.quantity * item.price, 0), [cartItems]);
-
-  function addToCart(item: MenuItem) {
     setCart((prev) => ({ ...prev, [item.id]: { ...item, quantity: (prev[item.id]?.quantity || 0) + 1 } }));
   }
 
@@ -107,12 +74,12 @@ export default function PreOrderPage() {
     });
   }
 
-  function handleCheckoutInput(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  function handleCheckoutInput(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value } = event.currentTarget;
     setCheckout((prev) => ({ ...prev, [name]: value }));
   }
 
-  function handleProceedToPayment(event: FormEvent<HTMLFormElement>) {
+  async function handleProceedToPayment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
@@ -251,7 +218,7 @@ export default function PreOrderPage() {
 
       <section className="mt-8 rounded-xl bg-white p-5 shadow">
         <h2 className="text-2xl font-semibold">3 & 4. Checkout and Payment</h2>
-        <form onSubmit={handleSubmit} className="mt-4 grid gap-3">
+        <form onSubmit={handleProceedToPayment} className="mt-4 grid gap-3">
           <input required name="customerName" value={checkout.customerName} onChange={handleCheckoutInput} className="rounded border p-2" placeholder="Full Name" />
           <input required type="email" name="email" value={checkout.email} onChange={handleCheckoutInput} className="rounded border p-2" placeholder="Email Address" />
           <input required name="phone" value={checkout.phone} onChange={handleCheckoutInput} className="rounded border p-2" placeholder="Phone Number" />
