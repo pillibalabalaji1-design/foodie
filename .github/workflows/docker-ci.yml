@@ -16,7 +16,6 @@ jobs:
       IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/foodie-backend
       HELM_REPO: https://github.com/pillibalabalaji1-design/foodie-helmchart.git
       HELM_BRANCH: main
-      HELM_WORKDIR: foodie
       VALUES_FILE: values-foodie-app.yaml
 
     steps:
@@ -43,31 +42,15 @@ jobs:
       - name: Clone Helm repo and update backend tag
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-
-          AUTH_TOKEN="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
-          if [ -z "${AUTH_TOKEN}" ]; then
-            echo "Missing token. Set GH_TOKEN secret or ensure github.token is available."
-            exit 1
-          fi
 
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          git clone "https://x-access-token:${AUTH_TOKEN}@github.com/pillibalabalaji1-design/foodie-helmchart.git" helm-repo
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/pillibalabalaji1-design/foodie-helmchart.git" helm-repo
           cd helm-repo
           git checkout "${HELM_BRANCH}"
-
-          if [ -d "${HELM_WORKDIR}" ]; then
-            cd "${HELM_WORKDIR}"
-          fi
-
-          if [ ! -f "${VALUES_FILE}" ]; then
-            echo "Expected values file not found: ${PWD}/${VALUES_FILE}"
-            exit 1
-          fi
 
           sed -i -E '/^backend:/,/^[^[:space:]]/ { /^  image:/,/^  [^[:space:]]/ { s#(^[[:space:]]*tag:[[:space:]]*).*$#\1"'"${IMAGE_TAG}"'"#; } }' "${VALUES_FILE}"
 
