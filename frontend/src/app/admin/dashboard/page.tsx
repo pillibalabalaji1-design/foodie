@@ -117,15 +117,8 @@ export default function DashboardPage() {
       setMenuMessage('Menu item created successfully.');
       notifyMenuUpdated();
       await loadData(isAdmin);
-    } catch (error: unknown) {
-      const response = (error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }).response;
-      const details = response?.data?.errors
-        ? Object.entries(response.data.errors)
-            .map(([field, issues]) => `${field}: ${issues.join(', ')}`)
-            .join(' | ')
-        : null;
-
-      setMenuMessage(details ? `Could not create menu item. ${details}` : response?.data?.message || 'Could not create menu item. Please try again.');
+    } catch {
+      setMenuMessage('Could not create menu item. Please try again.');
       await loadData(isAdmin);
     } finally {
       setIsCreatingMenu(false);
