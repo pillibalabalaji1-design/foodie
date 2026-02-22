@@ -1,17 +1,26 @@
-name: Docker CI
+name: Backend Docker CI + Helm GitOps
 
 on:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
-  build-and-push:
+  build-push-and-update-helm:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service: [frontend, backend, database]
+
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+      IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/foodie-backend
+      HELM_REPO: https://github.com/pillibalabalaji1-design/foodie-helmchart.git
+      HELM_BRANCH: main
+      HELM_WORKDIR: foodie
+      VALUES_FILE: values-foodie-app.yaml
+
     steps:
-      - name: Checkout
+      - name: Checkout application repository
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
@@ -20,15 +29,53 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: arunbalaji103
-          password: dckr_pat_BlDaW6aXAaV78uI_PVufvwQV34E
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push ${{ matrix.service }}
+      - name: Build and push backend image
         uses: docker/build-push-action@v6
         with:
-          context: ./${{ matrix.service }}
-          file: ./${{ matrix.service }}/Dockerfile
+          context: ./backend
+          file: ./backend/Dockerfile
           push: true
-          tags: |
-            arunbalaji103/foodie-${{ matrix.service }}:latest
-            arunbalaji103/foodie-${{ matrix.service }}:${{ github.sha }}
+          tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+      - name: Clone Helm repo and update backend tag
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          AUTH_TOKEN="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
+          if [ -z "${AUTH_TOKEN}" ]; then
+            echo "Missing token. Set GH_TOKEN secret or ensure github.token is available."
+            exit 1
+          fi
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git clone "https://x-access-token:${AUTH_TOKEN}@github.com/pillibalabalaji1-design/foodie-helmchart.git" helm-repo
+          cd helm-repo
+          git checkout "${HELM_BRANCH}"
+
+          if [ -d "${HELM_WORKDIR}" ]; then
+            cd "${HELM_WORKDIR}"
+          fi
+
+          if [ ! -f "${VALUES_FILE}" ]; then
+            echo "Expected values file not found: ${PWD}/${VALUES_FILE}"
+            exit 1
+          fi
+
+          sed -i -E '/^backend:/,/^[^[:space:]]/ { /^  image:/,/^  [^[:space:]]/ { s#(^[[:space:]]*tag:[[:space:]]*).*$#\1"'"${IMAGE_TAG}"'"#; } }' "${VALUES_FILE}"
+
+          if git diff --quiet -- "${VALUES_FILE}"; then
+            echo "No changes detected in ${VALUES_FILE}; skipping commit and push."
+            exit 0
+          fi
+
+          git add "${VALUES_FILE}"
+          git commit -m "chore(backend): update image tag to ${IMAGE_TAG}"
+          git push origin "${HELM_BRANCH}"
