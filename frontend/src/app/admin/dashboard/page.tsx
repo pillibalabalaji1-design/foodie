@@ -322,7 +322,14 @@ export default function DashboardPage() {
           {isAdmin ? (
             <form onSubmit={createMenu} className="grid gap-2">
               <input disabled={isCreatingMenu} name="name" required className="rounded border p-2" placeholder="Name" />
-              <textarea disabled={isCreatingMenu} name="description" required className="rounded border p-2" placeholder="Description" />
+              <textarea
+                disabled={isCreatingMenu}
+                name="description"
+                minLength={3}
+                required
+                className="rounded border p-2"
+                placeholder="Description"
+              />
               <input disabled={isCreatingMenu} name="price" required type="number" step="0.01" className="rounded border p-2" placeholder="Price" />
               <input disabled={isCreatingMenu} name="image" required type="file" accept="image/*" className="rounded border p-2" />
               <button disabled={isCreatingMenu} className="rounded bg-brandRed p-2 font-semibold text-white disabled:opacity-70">

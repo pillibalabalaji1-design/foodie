@@ -1,5 +1,11 @@
 import Link from 'next/link';
 
+const highlights = [
+  { title: '24h Advance Validation', detail: 'Every order is pre-scheduled so your food is always prepared fresh, never rushed.' },
+  { title: 'Curated Andhra Menu', detail: 'Classic biryanis, pulusu, fry items, and festive specials with bold home-style flavor.' },
+  { title: 'Reliable Delivery Slots', detail: 'Pick your preferred date/time and we prepare your order for that exact slot.' }
+];
+
 export default function Home() {
   return (
     <main className="mx-auto w-[92%] max-w-6xl py-12">
